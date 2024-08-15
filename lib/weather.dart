@@ -4,11 +4,11 @@ import 'package:diacritic/diacritic.dart';
 import 'package:intl/intl.dart';
 
 import "package:flutter/material.dart";
-//import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:mausam/keyfile.dart';
 import 'package:mausam/citysearch.dart';
+// import 'package:google_fonts/google_fonts.dart';
 
 class WeatherScreen extends StatefulWidget {
   const WeatherScreen({super.key});
@@ -20,6 +20,7 @@ class WeatherScreen extends StatefulWidget {
 class _WeatherScreenState extends State<WeatherScreen> {
   String cityName = 'New Delhi';
   String prevCityName = 'New Delhi';
+
   @override
   void initState() {
     super.initState();
@@ -43,9 +44,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
         data['country'] = cityData['sys']['country'];
 
         if (data['cod'].toString() == '200') {
-          prevCityName =
-              cityName; // Update prevCityName with the current cityName
-
+          prevCityName = cityName; // Update prevCityName with the current cityName
           return data;
         } else {
           throw Exception("API Error: ${data['message']}");
@@ -55,9 +54,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           showErrorDialog(context, "City not found!");
         });
-
-        throw Exception(
-            "City not found. Please check the city name and try again.");
+        throw Exception("City not found. Please check the city name and try again.");
       } else {
         throw Exception("Network Error: ${res.statusCode}");
       }
@@ -80,13 +77,46 @@ class _WeatherScreenState extends State<WeatherScreen> {
     }
   }
 
+void _showCleanDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: true, // Prevents closing by tapping outside
+    builder: (BuildContext context) {
+      Future.delayed(const Duration(milliseconds: 800), () {
+        Navigator.of(context).pop(); // Close the dialog after 2 seconds
+      });
+
+      return Dialog(
+        
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        elevation: 0,
+        backgroundColor:  Colors.transparent,
+        child: Container(
+          height: 100,
+          //padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          decoration: BoxDecoration(
+            color:  Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Center(
+            child: Text(
+              "Thank you for using the app !",
+              style:  TextStyle(color: Colors.white, fontSize: 22,fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         elevation: 1,
-
-        // backgroundColor: Colors.red,
         title: const Text(
           "Weather App",
           style: TextStyle(
@@ -107,18 +137,15 @@ class _WeatherScreenState extends State<WeatherScreen> {
       body: FutureBuilder(
         future: getCurrentWeather(),
         builder: (context, snapshot) {
-          //print(snapshot.data);
-
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator.adaptive());
           }
 
           if (snapshot.hasError) {
-            //print("$snapshot.error  ---ERORRRRRRRRR");
             final error = snapshot.error.toString();
             if (error.contains("City not found")) {
               return Container(
-                color: Colors.transparent, // or any other color
+                color: Colors.transparent,
               );
             } else {
               return Center(child: Text(snapshot.error.toString()));
@@ -129,50 +156,25 @@ class _WeatherScreenState extends State<WeatherScreen> {
           final currentime = data['list'][0]['main']['temp'];
           final currentstatus = data['list'][0]['weather'][0]['description'];
           final iconCode = data['list'][0]['weather'][0]['icon'];
-
           final pres = data['list'][0]['main']['pressure'];
           final windSpeed = data['list'][0]['wind']['speed'];
           final humidity = data['list'][0]['main']['humidity'];
 
-          //  print("Collecting info for ${data['city']} , ${data['country']}");
-
           return Padding(
-            padding: const EdgeInsets.only(bottom: 16, right: 16, left: 16),
+            padding: const EdgeInsets.only(bottom: 0, right: 16, left: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                //const SizedBox(
-                //  height: 10,
-                //),
-
-                /*Container(
-                  /*decoration: BoxDecoration(
-                        border: Border.all(
-                        color: Colors.blue, // Border color
-                        width: 3.0,        // Border width
-                        ),
-                        borderRadius: BorderRadius.circular(8.0), // Optional: Border radius
-                  ),*/
-                  //height: 40,
-                  width: double.infinity,
-                  child :  Center(child: Text("${data['city']} , ${data['country']}", style: const TextStyle(
-                    fontSize: 40,fontWeight: FontWeight.w200
-                  ),)),
-                ),*/
                 Padding(
-                  padding: const EdgeInsets.only(
-                    top: 5,
-                    bottom: 5,
-                  ), // Adds space from the top
+                  padding: const EdgeInsets.only(top: 5, bottom: 5),
                   child: GestureDetector(
                     onTap: () => _navigateAndSearchCity(context),
                     child: AnimatedOpacity(
                       duration: const Duration(seconds: 2),
-                      opacity: 1.0, // Start with 0.0 and animate to 1.0
+                      opacity: 1.0,
                       child: Center(
                         child: Text(
-                          removeDiacritics(
-                              "${data['city']} , ${data['country']}"),
+                          removeDiacritics("${data['city']} , ${data['country']}"),
                           style: TextStyle(
                             fontSize: 35,
                             fontWeight: FontWeight.w200,
@@ -188,9 +190,6 @@ class _WeatherScreenState extends State<WeatherScreen> {
                     ),
                   ),
                 ),
-
-                //MAIN CARD
-
                 SizedBox(
                   width: double.infinity,
                   child: Card(
@@ -198,7 +197,6 @@ class _WeatherScreenState extends State<WeatherScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     elevation: 10,
-                    //color: Colors.brown,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: BackdropFilter(
@@ -208,52 +206,32 @@ class _WeatherScreenState extends State<WeatherScreen> {
                           child: Column(
                             children: [
                               Text(
-                                //"28°ᶜ",
-                                //"${(double.parse(currentime)-273.15).toString()} K",
                                 "${(currentime - 273.15).round()}°C",
-                                //"${(currentime - 273.15)}°C",
-
                                 style: const TextStyle(
                                   fontSize: 32,
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
-                              //const SizedBox(
-                              //   height: 10,
-                              //),
                               Image.network(
                                 'http://openweathermap.org/img/wn/$iconCode@2x.png',
                                 width: 100,
                                 height: 100,
                                 fit: BoxFit.contain,
-                                loadingBuilder: (BuildContext context,
-                                    Widget child,
-                                    ImageChunkEvent? loadingProgress) {
+                                loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
                                   if (loadingProgress == null) {
-                                    // If loading is complete, show the image
                                     return child;
                                   } else {
-                                    // While the image is loading, show a CircularProgressIndicator
                                     return Center(
                                       child: CircularProgressIndicator(
-                                        value: loadingProgress
-                                                    .expectedTotalBytes !=
-                                                null
-                                            ? loadingProgress
-                                                    .cumulativeBytesLoaded /
-                                                (loadingProgress
-                                                        .expectedTotalBytes ??
-                                                    1)
+                                        value: loadingProgress.expectedTotalBytes != null
+                                            ? loadingProgress.cumulativeBytesLoaded /
+                                              (loadingProgress.expectedTotalBytes ?? 1)
                                             : null,
                                       ),
                                     );
                                   }
                                 },
                               ),
-
-                              // const SizedBox(
-                              //  height: 10,
-                              //),
                               Text(
                                 currentstatus,
                                 style: const TextStyle(
@@ -268,10 +246,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(
-                  height: 20,
-                ),
-                //FORECAST
+                const SizedBox(height: 20),
                 const Text(
                   "Hourly Forecast",
                   style: TextStyle(
@@ -279,68 +254,28 @@ class _WeatherScreenState extends State<WeatherScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(
-                  height: 6,
-                ),
-                /*const SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      RowCard(
-                        icon: MdiIcons.weatherCloudy,
-                        time: "02:00 AM",
-                        temp: "18°ᶜ",
-                      ),
-                      RowCard(
-                        icon: MdiIcons.weatherRainy,
-                        time: "04:00 AM",
-                        temp: "14°ᶜ",
-                      ),
-                      RowCard(
-                        icon: MdiIcons.weatherSnowyHeavy,
-                        time: "06:00 AM",
-                        temp: "4°ᶜ",
-                      ),
-                      RowCard(
-                        icon: MdiIcons.weatherLightning,
-                        time: "08:00 AM",
-                        temp: "10°ᶜ",
-                      ),
-                      RowCard(
-                        icon: MdiIcons.weatherSunny,
-                        time: "10:00 AM",
-                        temp: "25°ᶜ",
-                      ),
-                    ],
-                  ),
-                ),*/
-
+                const SizedBox(height: 6),
                 SizedBox(
                   height: 130,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: 5,
                     itemBuilder: (context, index) {
-                      final hourlyForecast =
-                          data['list'][index + 2]['main']['temp'];
-                      final hourlyTime =
-                          DateTime.parse((data['list'][index + 2]['dt_txt']));
-                      final forecastIcon =
-                          data['list'][index + 2]['weather'][0]['icon'];
+                      final hourlyForecast = data['list'][index + 2]['main']['temp'];
+                      final hourlyTime = DateTime.parse((data['list'][index + 2]['dt_txt']));
+                      final forecastIcon = data['list'][index + 2]['weather'][0]['icon'];
 
-                      final str =
-                          'http://openweathermap.org/img/wn/$forecastIcon@2x.png';
+                      final str = 'http://openweathermap.org/img/wn/$forecastIcon@2x.png';
 
                       return RowCard(
-                          link: str,
-                          time: DateFormat.j().format(hourlyTime).toString(),
-                          temp: "${(hourlyForecast - 273.15).round()} °C");
+                        link: str,
+                        time: DateFormat.j().format(hourlyTime).toString(),
+                        temp: "${(hourlyForecast - 273.15).round()} °C",
+                      );
                     },
                   ),
                 ),
-                const SizedBox(
-                  height: 15,
-                ),
+                const SizedBox(height: 15),
                 const Text(
                   "Additional Information",
                   style: TextStyle(
@@ -348,91 +283,61 @@ class _WeatherScreenState extends State<WeatherScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(
-                  height: 10,
-                ),
+                const SizedBox(height: 10),
                 Padding(
                   padding: const EdgeInsets.only(left: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      //ADDITIONAL INFO - HUMIDITY
                       Column(
                         children: [
                           const Icon(
                             Icons.water_drop_sharp,
                             size: 40,
                           ),
-                          const SizedBox(
-                            height: 5,
-                          ),
+                          const SizedBox(height: 5),
                           const Text(
                             "Humidity",
-                            style: TextStyle(
-                              fontSize: 15,
-                            ),
+                            style: TextStyle(fontSize: 15),
                           ),
-                          const SizedBox(
-                            height: 2,
-                          ),
+                          const SizedBox(height: 2),
                           Text(
-                            //"94",
                             "$humidity%",
                             style: const TextStyle(fontSize: 14),
                           )
                         ],
                       ),
-                      //SizedBox(width: 70,),
-                      //ADDITOINAL INFO - WIND SPEED
                       Column(
                         children: [
                           const Icon(
                             Icons.air,
                             size: 40,
                           ),
-                          const SizedBox(
-                            height: 5,
-                          ),
+                          const SizedBox(height: 5),
                           const Text(
                             "Wind Speed",
-                            style: TextStyle(
-                              fontSize: 15,
-                            ),
+                            style: TextStyle(fontSize: 15),
                           ),
-                          const SizedBox(
-                            height: 2,
-                          ),
+                          const SizedBox(height: 2),
                           Text(
-                            //"7.67",
                             "$windSpeed m/s",
                             style: const TextStyle(fontSize: 14),
                           )
                         ],
                       ),
-                      //SizedBox(width: 70,),
-                      //ADDITOINAL INFO - PRESSURE
                       Column(
                         children: [
                           const Icon(
-                            // Icons.beach_access,
-                            //MdiIcons.speedometer,
                             MdiIcons.waves,
                             size: 40,
                           ),
-                          const SizedBox(
-                            height: 5,
-                          ),
+                          const SizedBox(height: 5),
                           const Text(
                             "Pressure",
-                            style: TextStyle(
-                              fontSize: 15,
-                            ),
+                            style: TextStyle(fontSize: 15),
                           ),
-                          const SizedBox(
-                            height: 2,
-                          ),
+                          const SizedBox(height: 2),
                           Text(
-                            //"1006",
                             "$pres hPa",
                             style: const TextStyle(fontSize: 14),
                           )
@@ -445,6 +350,27 @@ class _WeatherScreenState extends State<WeatherScreen> {
             ),
           );
         },
+      ),
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.transparent,
+        child: GestureDetector(
+          onTap: () {
+            _showCleanDialog(context);
+          },
+          child: Container(
+            padding: const EdgeInsets.only(left:16),
+            child: const Center(
+              child: Text(
+                'Made by N0VA',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -478,12 +404,13 @@ class RowCard extends StatelessWidget {
   final String time;
   final String temp;
   final String link;
-  //final Image.network photo;
 
-  const RowCard(
-      {super.key, required this.link, required this.time, required this.temp}
-      //required
-      );
+  const RowCard({
+    super.key,
+    required this.link,
+    required this.time,
+    required this.temp,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -508,32 +435,25 @@ class RowCard extends StatelessWidget {
                 width: 50,
                 height: 50,
                 fit: BoxFit.contain,
-                loadingBuilder: (BuildContext context, Widget child,
-                    ImageChunkEvent? loadingProgress) {
+                loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
                   if (loadingProgress == null) {
-                    // If loading is complete, show the image
                     return child;
                   } else {
-                    // While the image is loading, show a CircularProgressIndicator
                     return Center(
                       child: CircularProgressIndicator(
                         value: loadingProgress.expectedTotalBytes != null
                             ? loadingProgress.cumulativeBytesLoaded /
-                                (loadingProgress.expectedTotalBytes ?? 1)
+                              (loadingProgress.expectedTotalBytes ?? 1)
                             : null,
                       ),
                     );
                   }
                 },
               ),
-              const SizedBox(
-                height: 2,
-              ),
+              const SizedBox(height: 2),
               Text(
                 temp,
-                style: const TextStyle(
-                  fontSize: 14,
-                ),
+                style: const TextStyle(fontSize: 14),
               )
             ],
           ),
