@@ -22,6 +22,12 @@ class _CitySearchScreenState extends State<CitySearchScreen> {
           children: [
             TextField(
               controller: _controller,
+              onSubmitted: (value){
+                String cityName = _controller.text.trim();
+                if (cityName.isNotEmpty) {
+                  Navigator.pop(context, cityName);
+                }
+              },
               decoration: const InputDecoration(
                 labelText: "Enter city name",
                 border: OutlineInputBorder(),
