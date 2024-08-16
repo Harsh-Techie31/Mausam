@@ -36,6 +36,8 @@ dependencies:
 
   diacritic: ^0.1.5
   google_fonts: ^6.2.1
+  geolocator: ^12.0.0 
+  geolocator_android: 4.5.5
 
 
 

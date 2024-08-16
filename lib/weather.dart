@@ -1,8 +1,8 @@
 import 'dart:convert';
 import "dart:ui";
 import 'package:diacritic/diacritic.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
-
 import "package:flutter/material.dart";
 import 'package:http/http.dart' as http;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -20,25 +20,51 @@ class WeatherScreen extends StatefulWidget {
 class _WeatherScreenState extends State<WeatherScreen> {
   String cityName = 'New Delhi';
   String prevCityName = 'New Delhi';
+  Position? _position;
 
   @override
   void initState() {
     super.initState();
-    getCurrentWeather();
+    getCurrentLocation().then((position) {
+      setState(() {
+        _position = position;
+      });
+      getCurrentWeather();
+    });
   }
 
   Future<Map<String, dynamic>> getCurrentWeather() async {
+    String url,url2;
+
+    if (_position != null) {
+      // Use latitude and longitude if available
+      final lat = _position!.latitude;
+      final lon = _position!.longitude;
+      //print("11111111111111111111111111111111111");
+      //url = 'https://api.openweathermap.org/data/2.5/onecall?lat=$lat&lon=$lon&appid=$apiKey';
+      url = 'https://api.openweathermap.org/data/2.5/forecast?lat=$lat&lon=$lon&APPID=$apiKey';
+      url2 = 'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&APPID=$apiKey';
+    } else {
+      //print("2222222222222222222222222222222");
+      // Fallback to default city (New Delhi)
+      url = 'https://api.openweathermap.org/data/2.5/forecast?q=$cityName&APPID=$apiKey';
+      url2 = 'https://api.openweathermap.org/data/2.5/weather?q=$cityName&APPID=$apiKey';
+    }
+
+
     try {
       final res = await http.get(Uri.parse(
-        'https://api.openweathermap.org/data/2.5/forecast?q=$cityName&APPID=$apiKey',
+        url,
       ));
       final name = await http.get(Uri.parse(
-        'https://api.openweathermap.org/data/2.5/weather?q=$cityName&APPID=$apiKey',
+        url2,
       ));
 
       if (res.statusCode == 200 && name.statusCode == 200) {
         final data = jsonDecode(res.body);
         final cityData = jsonDecode(name.body);
+
+        //print(data);
 
         data['city'] = cityData['name'];
         data['country'] = cityData['sys']['country'];
@@ -64,6 +90,30 @@ class _WeatherScreenState extends State<WeatherScreen> {
     }
   }
 
+
+
+  Future<Position?> getCurrentLocation() async {
+  LocationPermission permission = await Geolocator.checkPermission();
+
+  if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+    permission = await Geolocator.requestPermission();
+    
+    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      // Handle the case when permission is denied permanently
+      return null;
+    }
+  }
+
+  if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+    Position currentPosition = await Geolocator.getCurrentPosition();
+    //print("LOCATIONNNNNNNNNNNNNNNNNNNNNNNN :::::::::::::::: ${currentPosition.latitude} ----- ${currentPosition.longitude}");
+    return currentPosition;
+  } else {
+    // Permission was denied or restricted, handle this case appropriately
+    return null;
+  }
+}
+
   Future<void> _navigateAndSearchCity(BuildContext context) async {
     final result = await Navigator.push(
       context,
@@ -73,11 +123,13 @@ class _WeatherScreenState extends State<WeatherScreen> {
     if (result != null && result is String) {
       setState(() {
         cityName = result;
+        _position = null;
       });
     }
+
   }
 
-void _showCleanDialog(BuildContext context) {
+/*void _showCleanDialog(BuildContext context) {
   showDialog(
     context: context,
     barrierDismissible: true, // Prevents closing by tapping outside
@@ -97,12 +149,12 @@ void _showCleanDialog(BuildContext context) {
           height: 100,
           //padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           decoration: BoxDecoration(
-            color:  Colors.transparent,
+            color:  Colors.red,
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Center(
             child: Text(
-              "Thank you for using the app !",
+              "Thank you for\nusing the app !",
               style:  TextStyle(color: Colors.white, fontSize: 22,fontWeight: FontWeight.bold),
             ),
           ),
@@ -110,7 +162,74 @@ void _showCleanDialog(BuildContext context) {
       );
     },
   );
+}*/
+/*void _showCleanDialog(BuildContext context) {
+  const snackBar =  SnackBar(
+    content:  Text(
+      "Thank you for using the app!",
+      style:  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+    ),
+    backgroundColor: Colors.red,
+    behavior: SnackBarBehavior.floating,
+    duration:  Duration(seconds: 1),
+  );
+
+  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+}*/
+void _showCleanDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      // Close the dialog after 2 seconds
+      Future.delayed(const Duration(milliseconds: 800), () {
+        Navigator.of(context).pop();
+      });
+
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        backgroundColor: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Colors.pink, Colors.purple],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.all(16.0),
+          child: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+               Icon(
+                Icons.mood,
+                size: 80,
+                color: Colors.white,
+              ),
+               SizedBox(height: 10),
+               Text(
+                "Thank you for using the app!",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+               SizedBox(height: 20),
+              // Remove the OK button
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -129,6 +248,7 @@ void _showCleanDialog(BuildContext context) {
           IconButton(
             icon: const Icon(Icons.refresh_sharp),
             onPressed: () {
+              //getCurrentLocation();
               setState(() {});
             },
           ),
